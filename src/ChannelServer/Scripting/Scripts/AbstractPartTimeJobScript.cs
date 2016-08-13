@@ -26,34 +26,34 @@ namespace Aura.Channel.Scripting.Scripts
 		// The description of the part time job that is shown to the user. eg. Looking for help with delivering goods to Inn.
 		public abstract string PtjDescription { get; }
 
-		const string HOOK_NAME_AFTER_INTRO = "after_intro";
-		const string HOOK_NAME_BEFORE_KEYWORDS = "before_keywords";
+		const string HookNameAfterIntro = "after_intro";
+		const string HookNameBeforeKeywords = "before_keywords";
 
 		int Remaining { get; set; }
 
 		// Must set all of these strings in the struct
 		struct Dialogs
 		{
-			public readonly string doingPtjForAnotherNpc;
+			public readonly string DoingPtjForAnotherNpc;
 
-			public readonly string earlyReport_finished;
-			public readonly string earlyReport_notFinished;
+			public readonly string EarlyReport_finished;
+			public readonly string EarlyReport_notFinished;
 
-			public readonly string report_dialogText;
-			public readonly string report_cancelReport;
-			public readonly string report_noResult;
-			public readonly string report_result_dialogText;
-			public readonly string report_result_cancelReport;
-			public readonly string report_result_perfectResult;
-			public readonly string report_result_midResult;
-			public readonly string report_result_lowResult;
+			public readonly string Report_dialogText;
+			public readonly string Report_cancelReport;
+			public readonly string Report_noResult;
+			public readonly string Report_result_dialogText;
+			public readonly string Report_result_cancelReport;
+			public readonly string Report_result_perfectResult;
+			public readonly string Report_result_midResult;
+			public readonly string Report_result_lowResult;
 
-			public readonly string lateToAcceptPtj;
-			public readonly string noMorePtjLeft;
+			public readonly string LateToAcceptPtj;
+			public readonly string NoMorePtjLeft;
 
-			public readonly string askPtj_dialogText;
-			public readonly string askPtj_accept;
-			public readonly string askPtj_reject;
+			public readonly string AskPtj_dialogText;
+			public readonly string AskPtj_accept;
+			public readonly string AskPtj_reject;
 
 		}
         
@@ -73,8 +73,8 @@ namespace Aura.Channel.Scripting.Scripts
 
 		public override void Load()
 		{
-			AddHook(NpcNameId, HOOK_NAME_AFTER_INTRO, AfterIntro);
-			AddHook(NpcNameId, HOOK_NAME_BEFORE_KEYWORDS, BeforeKeywords);
+			AddHook(NpcNameId, HookNameAfterIntro, AfterIntro);
+			AddHook(NpcNameId, HookNameBeforeKeywords, BeforeKeywords);
 		}
 
 		public async Task<HookResult> AfterIntro (NpcScript npc, params object[] args)
@@ -118,7 +118,7 @@ namespace Aura.Channel.Scripting.Scripts
 			if (npc.DoingPtjForOtherNpc())
 			{
                 
-				npc.Msg(L(PtjDialogs.doingPtjForAnotherNpc));
+				npc.Msg(L(PtjDialogs.DoingPtjForAnotherNpc));
 				return;
 			}
 
@@ -131,18 +131,18 @@ namespace Aura.Channel.Scripting.Scripts
 				if (!npc.ErinnHour(Report, Deadline))
 				{
 					if (result == QuestResult.Perfect)
-						npc.Msg(L(PtjDialogs.earlyReport_finished));
+						npc.Msg(L(PtjDialogs.EarlyReport_finished));
 					else
-						npc.Msg(L(PtjDialogs.earlyReport_notFinished));
+						npc.Msg(L(PtjDialogs.EarlyReport_notFinished));
 					return;
 				}
 
 				// Report?
-				npc.Msg(L(PtjDialogs.report_dialogText), npc.Button(L("Report Now"), "@report"), npc.Button(L("Report Later"), "@later"));
+				npc.Msg(L(PtjDialogs.Report_dialogText), npc.Button(L("Report Now"), "@report"), npc.Button(L("Report Later"), "@later"));
 
 				if (await npc.Select() != "@report")
 				{
-					npc.Msg(L(PtjDialogs.report_cancelReport));
+					npc.Msg(L(PtjDialogs.Report_cancelReport));
 					return;
 				}
 
@@ -151,19 +151,19 @@ namespace Aura.Channel.Scripting.Scripts
 				{
 					npc.GiveUpPtj();
 
-					npc.Msg(npc.FavorExpression(), L(PtjDialogs.report_noResult));
+					npc.Msg(npc.FavorExpression(), L(PtjDialogs.Report_noResult));
 					npc.ModifyRelation(0, -Random(3), 0);
 				}
 				// Low~Perfect result
 				else
 				{
-					npc.Msg(L(PtjDialogs.report_result_dialogText), npc.Button(L("Report Later"), "@later"), npc.PtjReport(result));
+					npc.Msg(L(PtjDialogs.Report_result_dialogText), npc.Button(L("Report Later"), "@later"), npc.PtjReport(result));
 					var reply = await npc.Select();
 
 					// Report later
 					if (!reply.StartsWith("@reward:"))
 					{
-						npc.Msg(L(PtjDialogs.report_result_cancelReport));
+						npc.Msg(L(PtjDialogs.Report_result_cancelReport));
 						return;
 					}
 
@@ -174,17 +174,17 @@ namespace Aura.Channel.Scripting.Scripts
 					// Result msg
 					if (result == QuestResult.Perfect)
 					{
-						npc.Msg(npc.FavorExpression(), L(PtjDialogs.report_result_perfectResult));
+						npc.Msg(npc.FavorExpression(), L(PtjDialogs.Report_result_perfectResult));
 						npc.ModifyRelation(0, Random(3), 0);
 					}
 					else if (result == QuestResult.Mid)
 					{
-						npc.Msg(npc.FavorExpression(), L(PtjDialogs.report_result_midResult));
+						npc.Msg(npc.FavorExpression(), L(PtjDialogs.Report_result_midResult));
 						npc.ModifyRelation(0, Random(1), 0);
 					}
 					else if (result == QuestResult.Low)
 					{
-						npc.Msg(npc.FavorExpression(), L(PtjDialogs.report_result_lowResult));
+						npc.Msg(npc.FavorExpression(), L(PtjDialogs.Report_result_lowResult));
 						npc.ModifyRelation(0, -Random(2), 0);
 					}
 				}
@@ -194,14 +194,14 @@ namespace Aura.Channel.Scripting.Scripts
 			// Check if PTJ time
 			if (!npc.ErinnHour(Start, Deadline))
 			{
-				npc.Msg(L(PtjDialogs.lateToAcceptPtj));
+				npc.Msg(L(PtjDialogs.LateToAcceptPtj));
 				return;
 			}
 
 			// Check if not done today and if there are jobs remaining
 			if (!npc.CanDoPtj(JobType, Remaining))
 			{
-				npc.Msg(L(PtjDialogs.noMorePtjLeft));
+				npc.Msg(L(PtjDialogs.NoMorePtjLeft));
 				return;
 			}
 
@@ -210,16 +210,16 @@ namespace Aura.Channel.Scripting.Scripts
 
 			// Msg is kinda unofficial, she currently says the following, and then
 			// tells you you'd get Homestead seeds.
-			npc.Msg(L(PtjDialogs.askPtj_dialogText), npc.PtjDesc(randomPtj, L(PtjName), L(PtjDescription), PerDay, Remaining, npc.GetPtjDoneCount(JobType)));
+			npc.Msg(L(PtjDialogs.AskPtj_dialogText), npc.PtjDesc(randomPtj, L(PtjName), L(PtjDescription), PerDay, Remaining, npc.GetPtjDoneCount(JobType)));
 
 			if (await npc.Select() == "@accept")
 			{
-				npc.Msg(L(PtjDialogs.askPtj_accept));
+				npc.Msg(L(PtjDialogs.AskPtj_accept));
 				npc.StartPtj(randomPtj);
 			}
 			else
 			{
-				npc.Msg(L(PtjDialogs.askPtj_reject));
+				npc.Msg(L(PtjDialogs.AskPtj_reject));
 			}
 		}
 	}
