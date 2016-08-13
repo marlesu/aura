@@ -26,6 +26,39 @@ namespace Aura.Channel.Scripting.Scripts
 
         int Remaining { get; set; }
 
+        // Must set all of these strings in the struct
+        struct Dialogs
+        {
+            public readonly string doingPtjForAnotherNpc;
+
+            public readonly string early_perfectResult;
+            public readonly string early_notFinished;
+
+            public readonly string report_dialogText;
+            public readonly string report_cancelReport;
+            public readonly string report_noResult;
+            public readonly string report_result_dialogText;
+            public readonly string report_result_cancelReport;
+            public readonly string report_result_perfectResult;
+            public readonly string report_result_midResult;
+            public readonly string report_result_lowResult;
+
+            public readonly string lateToAcceptPtj;
+            public readonly string noMorePtjLeft;
+
+            public readonly string askPtj_dialogText;
+            public readonly string askPtj_accept;
+            public readonly string askPtj_reject;
+
+        }
+        
+        Dialogs NpcDialogs { get; }
+
+        protected AbstractPartTimeJobScript()
+        {
+            NpcDialogs = new Dialogs();
+        }
+
         [On("ErinMidnightTick")]
         public void OnErinnMidnightTick(ErinnTime time)
         {
