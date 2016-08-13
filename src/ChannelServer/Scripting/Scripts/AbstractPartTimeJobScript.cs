@@ -19,7 +19,12 @@ namespace Aura.Channel.Scripting.Scripts
 
         public abstract int[] QuestIds { get; }
 
+        // The npc name id that is taken as a key to hook this script to ptj keyword. eg. _piaras
         public abstract string NpcNameId { get; }
+        // The name of the part time job that is shown to the user. eg. Piaras's Inn Part-time Job
+        public abstract string PtjName { get; }
+        // The description of the part time job that is shown to the user. eg. Looking for help with delivering goods to Inn.
+        public abstract string PtjDescription { get; }
 
         const string HOOK_NAME_AFTER_INTRO = "after_intro";
         const string HOOK_NAME_BEFORE_KEYWORDS = "before_keywords";
@@ -31,8 +36,8 @@ namespace Aura.Channel.Scripting.Scripts
         {
             public readonly string doingPtjForAnotherNpc;
 
-            public readonly string early_perfectResult;
-            public readonly string early_notFinished;
+            public readonly string earlyReport_finished;
+            public readonly string earlyReport_notFinished;
 
             public readonly string report_dialogText;
             public readonly string report_cancelReport;
@@ -52,11 +57,11 @@ namespace Aura.Channel.Scripting.Scripts
 
         }
         
-        Dialogs NpcDialogs { get; }
+        Dialogs PtjDialogs { get; }
 
         protected AbstractPartTimeJobScript()
         {
-            NpcDialogs = new Dialogs();
+            PtjDialogs = new Dialogs();
         }
 
         [On("ErinMidnightTick")]
@@ -113,7 +118,7 @@ namespace Aura.Channel.Scripting.Scripts
             if (npc.DoingPtjForOtherNpc())
             {
                 
-                npc.Msg(L(NpcDialogs.doingPtjForAnotherNpc));
+                npc.Msg(L(PtjDialogs.doingPtjForAnotherNpc));
                 return;
             }
 
@@ -126,18 +131,18 @@ namespace Aura.Channel.Scripting.Scripts
                 if (!npc.ErinnHour(Report, Deadline))
                 {
                     if (result == QuestResult.Perfect)
-                        npc.Msg(L("Ah, you are here already?<br/>It's a little bit too early. Can you come back around the deadline?"));
+                        npc.Msg(L(PtjDialogs.earlyReport_finished));
                     else
-                        npc.Msg(L("I hope you didn't forget what I asked you to do.<p/>Please have it done by the deadline."));
+                        npc.Msg(L(PtjDialogs.earlyReport_notFinished));
                     return;
                 }
 
                 // Report?
-                npc.Msg(L("Did you complete the task I requested?<br/>You can report now and finish it up,<br/>or you may report it later if you're not done yet."), npc.Button(L("Report Now"), "@report"), npc.Button(L("Report Later"), "@later"));
+                npc.Msg(L(PtjDialogs.report_dialogText), npc.Button(L("Report Now"), "@report"), npc.Button(L("Report Later"), "@later"));
 
                 if (await npc.Select() != "@report")
                 {
-                    npc.Msg(L("Please report before the deadline is over.<br/>Even if the work is not done, you should still report.<br/>Then I can pay you for what you've completed."));
+                    npc.Msg(L(PtjDialogs.report_cancelReport));
                     return;
                 }
 
@@ -146,19 +151,19 @@ namespace Aura.Channel.Scripting.Scripts
                 {
                     npc.GiveUpPtj();
 
-                    npc.Msg(npc.FavorExpression(), L("Ha ha. This is a little disappointing.<br/>I don't think I can pay you for this."));
+                    npc.Msg(npc.FavorExpression(), L(PtjDialogs.report_noResult));
                     npc.ModifyRelation(0, -Random(3), 0);
                 }
                 // Low~Perfect result
                 else
                 {
-                    npc.Msg(L("You are quite skillful, <username/>.<br/>Now there's nothing to worry about even if I get too much work. Ha ha.<br/>Please choose what you want. You deserve it.<br/>I'd like to give it to you as a compensation for your hard work."), npc.Button(L("Report Later"), "@later"), npc.PtjReport(result));
+                    npc.Msg(L(PtjDialogs.report_result_dialogText), npc.Button(L("Report Later"), "@later"), npc.PtjReport(result));
                     var reply = await npc.Select();
 
                     // Report later
                     if (!reply.StartsWith("@reward:"))
                     {
-                        npc.Msg(L("Please report before the deadline is over.<br/>Even if the work is not done, you should still report.<br/>Then I can pay you for what you've completed."));
+                        npc.Msg(L(PtjDialogs.report_result_cancelReport));
                         return;
                     }
 
@@ -169,17 +174,17 @@ namespace Aura.Channel.Scripting.Scripts
                     // Result msg
                     if (result == QuestResult.Perfect)
                     {
-                        npc.Msg(npc.FavorExpression(), L("Great! You have done well as I requested.<br/>I hope you can help me again next time."));
+                        npc.Msg(npc.FavorExpression(), L(PtjDialogs.report_result_perfectResult));
                         npc.ModifyRelation(0, Random(3), 0);
                     }
                     else if (result == QuestResult.Mid)
                     {
-                        npc.Msg(npc.FavorExpression(), L("Thank you. Although you didn't complete the job, you've done enough so far.<br/>But I'm sorry to tell you I must deduct a little from your pay."));
+                        npc.Msg(npc.FavorExpression(), L(PtjDialogs.report_result_midResult));
                         npc.ModifyRelation(0, Random(1), 0);
                     }
                     else if (result == QuestResult.Low)
                     {
-                        npc.Msg(npc.FavorExpression(), L("Hmm... It's not exactly what I expected, but thank you.<br/>I'm afraid this is all I can pay you."));
+                        npc.Msg(npc.FavorExpression(), L(PtjDialogs.report_result_lowResult));
                         npc.ModifyRelation(0, -Random(2), 0);
                     }
                 }
@@ -189,14 +194,14 @@ namespace Aura.Channel.Scripting.Scripts
             // Check if PTJ time
             if (!npc.ErinnHour(Start, Deadline))
             {
-                npc.Msg(L("Hmm... It's not a good time for this.<br/>Can you come back when it is time for part-time jobs?"));
+                npc.Msg(L(PtjDialogs.lateToAcceptPtj));
                 return;
             }
 
             // Check if not done today and if there are jobs remaining
             if (!npc.CanDoPtj(JobType, Remaining))
             {
-                npc.Msg(L("I'm all set for today.<br/>Will you come back tomorrow?"));
+                npc.Msg(L(PtjDialogs.noMorePtjLeft));
                 return;
             }
 
@@ -205,16 +210,16 @@ namespace Aura.Channel.Scripting.Scripts
 
             // Msg is kinda unofficial, she currently says the following, and then
             // tells you you'd get Homestead seeds.
-            npc.Msg(L("Are you here for a part-time job at my Inn again?"), npc.PtjDesc(randomPtj, L("Piaras's Inn Part-time Job"), L("Looking for help with delivering goods to Inn."), PerDay, Remaining, npc.GetPtjDoneCount(JobType)));
+            npc.Msg(L(PtjDialogs.askPtj_dialogText), npc.PtjDesc(randomPtj, L(PtjName), L(PtjDescription), PerDay, Remaining, npc.GetPtjDoneCount(JobType)));
 
             if (await npc.Select() == "@accept")
             {
-                npc.Msg(L("I'll be counting on you as usual."));
+                npc.Msg(L(PtjDialogs.askPtj_accept));
                 npc.StartPtj(randomPtj);
             }
             else
             {
-                npc.Msg(L("You want to sleep on it?<br/>Alright, then.<br/>But report on time please."));
+                npc.Msg(L(PtjDialogs.askPtj_reject));
             }
         }
     }
