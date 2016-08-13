@@ -33,7 +33,8 @@ namespace Aura.Channel.Scripting.Scripts
 
         public override void Load()
         {
-            //AddHook(NpcNameId, HOOK_NAME_AFTER_INTRO, 
+            AddHook(NpcNameId, HOOK_NAME_AFTER_INTRO, AfterIntro);
+            AddHook(NpcNameId, HOOK_NAME_BEFORE_KEYWORDS, BeforeKeywords);
         }
 
         public async Task<HookResult> AfterIntro (NpcScript npc, params object[] args)
